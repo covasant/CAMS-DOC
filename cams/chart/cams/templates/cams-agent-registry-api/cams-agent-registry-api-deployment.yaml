@@ -1,0 +1,233 @@
+#TRK-4F41B1FD
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-agentregistry
+  labels:
+    app: {{ include "agentregistry.labels.app" . }}
+    component: agentregistry
+    name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.agentregistry.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ include "agentregistry.labels.app" . }}
+      component: agentregistry
+      name: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app: {{ include "agentregistry.labels.app" . }}
+        component: agentregistry
+        name: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+
+      initContainers:
+      - name: wait-for-postgres
+        image: postgres:17
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: DATABASE_PASSWORD
+        command:
+        - sh
+        - -c
+        - |
+          until pg_isready -h {{ .Release.Name }}-postgresql-svc -p 5432 -U postgres; do
+            echo "Waiting for PostgreSQL...";
+            sleep 2;
+          done
+
+      containers:
+      - name: agentregistry-api
+        image: "{{ .Values.agentregistry.image.repository }}:{{ .Values.agentregistry.image.tag }}"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: APP_ROLE
+          value: "api"
+        - name: POSTGRES_HOST
+          value: "{{ .Release.Name }}-postgresql-svc"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DATABASE
+          value: "agent_registryv2"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: DATABASE_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: DATABASE_PASSWORD
+
+        - name: ENABLE_BACKGROUND_TASKS
+          value: "false"
+        - name: DEPLOYER_BASE_URL
+          value: "http://deployer-svc"
+        - name: AUTH_BASE_URL
+          value: "http://{{ .Release.Name }}-cams-api-svc:80/auth/validate-token"
+        - name: ENCRYPTION_BASE_URL
+          value: "http://encryption-svc"
+        - name: API_AUTH_BASEURL
+          value: "https://aifabric.{{ .Values.app.baseDomain }}/api/auth/"
+        - name: MAIN_QUEUE
+          value: "agent.registry"
+        - name: MAIN_EXCHANGE
+          value: "agent.flow"
+        - name: CREATE_ROUTING_KEY
+          value: "agent.registry.create"
+        - name: CREATED_ROUTING_KEY
+          value: "agent.registry.created"
+        - name: UPDATE_ROUTING_KEY
+          value: "agent.registry.update"
+        - name: UPDATED_ROUTING_KEY
+          value: "agent.registry.updated"
+        - name: ERROR_ROUTING_KEY
+          value: "agent.registry.error"
+        - name: REGISTRY_DISCOVERY_ROUTING_KEY
+          value: "agent.registry.discovery.searchtext.routing"
+        - name: REGISTRY_DISCOVERY_QUEUE
+          value: "agent.registry.discovery.searchtext.queue"
+        - name: REGISTRY_DISCOVERY_EXCHANGE
+          value: "agent.registry.discovery.exchange"
+        - name: HOST
+          value: dummy
+        - name: CLIENT_ID
+          value: dummy
+        - name: CLIENT_SECRET
+          value: dummy
+        - name: PROJECT_ID
+          value: dummy
+        - name: APP_STATUS_VALUE
+          value: app_status
+        - name: GATEWAY_URL
+          value: http://gateway-service:8080
+        - name: RABBITMQ_HOST
+          value: 10.0.0.100
+        - name: RABBITMQ_USER
+          value: dummy-user
+        - name: RABBITMQ_PASSWORD
+          value: dummy-password
+        - name: RABBITMQ_PORT
+          value: "5672"
+        - name: OPENAI_API_KEY
+          value: "dummy"
+
+        envFrom:
+        - secretRef:
+            name: {{ .Release.Name }}-config-envs
+
+        resources:
+          {{- toYaml .Values.agentregistry.resources | nindent 12 }}
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 20
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 20
+
+      - name: agentregistry-consumer
+        image: "{{ .Values.agentregistry.image.repository }}:{{ .Values.agentregistry.image.tag }}"
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: APP_ROLE
+          value: "consumer"
+        - name: POSTGRES_HOST
+          value: "{{ .Release.Name }}-postgresql-svc"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DATABASE
+          value: "agent_registryv2"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: DATABASE_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: DATABASE_PASSWORD
+        - name: ENABLE_BACKGROUND_TASKS
+          value: "false"
+        - name: DEPLOYER_BASE_URL
+          value: "http://deployer-svc"
+        - name: AUTH_BASE_URL
+          value: "http://{{ .Release.Name }}-cams-api-svc:80/auth/validate-token"
+        - name: ENCRYPTION_BASE_URL
+          value: "http://encryption-svc"
+        - name: API_AUTH_BASEURL
+          value: "https://aifabric.{{ .Values.app.baseDomain }}/api/auth/"
+        - name: MAIN_QUEUE
+          value: "agent.registry"
+        - name: MAIN_EXCHANGE
+          value: "agent.flow"
+        - name: CREATE_ROUTING_KEY
+          value: "agent.registry.create"
+        - name: CREATED_ROUTING_KEY
+          value: "agent.registry.created"
+        - name: UPDATE_ROUTING_KEY
+          value: "agent.registry.update"
+        - name: UPDATED_ROUTING_KEY
+          value: "agent.registry.updated"
+        - name: ERROR_ROUTING_KEY
+          value: "agent.registry.error"
+        - name: REGISTRY_DISCOVERY_ROUTING_KEY
+          value: "agent.registry.discovery.searchtext.routing"
+        - name: REGISTRY_DISCOVERY_QUEUE
+          value: "agent.registry.discovery.searchtext.queue"
+        - name: REGISTRY_DISCOVERY_EXCHANGE
+          value: "agent.registry.discovery.exchange"
+        - name: HOST
+          value: dummy
+        - name: CLIENT_ID
+          value: dummy
+        - name: CLIENT_SECRET
+          value: dummy
+        - name: PROJECT_ID
+          value: dummy
+        - name: APP_STATUS_VALUE
+          value: active
+        - name: GATEWAY_URL
+          value: http://gateway-service:8080
+        - name: RABBITMQ_HOST
+          value: 10.0.0.100
+        - name: RABBITMQ_USER
+          value: dummy-user
+        - name: RABBITMQ_PASSWORD
+          value: dummy-password
+        - name: RABBITMQ_PORT
+          value: "5672"
+        - name: OPENAI_API_KEY
+          value: "dummy"
+
+        envFrom:
+        - secretRef:
+            name: {{ .Release.Name }}-config-envs
+
+        resources:
+            {{- toYaml .Values.agentregistry.resources | nindent 12 }}

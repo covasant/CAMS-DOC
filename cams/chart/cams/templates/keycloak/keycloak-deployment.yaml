@@ -1,0 +1,117 @@
+#TRK-4F41B1FD
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-keycloak
+  labels:
+    app: {{ include "keycloak.labels.app" . }}
+    component: keycloak
+    name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.keycloak.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ include "keycloak.labels.app" . }}
+      component: keycloak
+      name: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app: {{ include "keycloak.labels.app" . }}
+        component: keycloak
+        name: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60
+      initContainers:
+      - name: wait-for-postgres
+        image: postgres:17
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: DATABASE_PASSWORD
+        command:
+        - sh
+        - -c
+        - |
+          until pg_isready -h {{ .Release.Name }}-postgresql-svc -p 5432 -U postgres; do
+          echo "Waiting for PostgreSQL...";
+          sleep 2;
+          done
+      containers:
+        - name: keycloak
+          image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"
+          args:
+            - "start"
+          ports:
+            - containerPort: 8080
+              name: keycloak
+              protocol: TCP
+          env:
+            - name: KC_DB_URL_HOST
+              value: "{{ .Release.Name }}-postgresql-svc"
+            - name: KC_DB_URL_PORT
+              value: "5432"
+            - name: KC_DB_URL_DATABASE
+              value: "keycloakdb"
+            - name: KC_HTTPS_PORT
+              value: "443"
+            - name: KC_PROXY
+              value: "edge"
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-config-envs
+                  key: DATABASE_USER
+            - name: KC_DB
+              value: "postgres"
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-config-envs
+                  key: DATABASE_PASSWORD
+            - name: KC_LOG_LEVEL
+              value: "DEBUG"
+            - name: KC_LOG_CONSOLE
+              value: "true"
+            - name: KC_LOG_CONSOLE_LEVEL
+              value: "DEBUG"
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+            - name: KC_HOSTNAME_ADMIN_URL
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/auth"
+            - name: KC_HTTP_COOKIE_SAME_SITE
+              value: "None"
+            - name: KC_HTTP_COOKIE_SECURE
+              value: "true"
+            - name: KC_HOSTNAME_URL
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/auth"
+          resources:
+            {{- toYaml .Values.keycloak.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health/ready
+              port: keycloak
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: keycloak
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3

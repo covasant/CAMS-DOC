@@ -1,0 +1,221 @@
+<svg viewBox="0 0 1400 1000" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif" font-size="12">
+
+  <!-- Background -->
+  <rect width="1400" height="1000" fill="#f0f4f8"/>
+
+  <!-- GKE Icon at top -->
+  <circle cx="700" cy="40" r="28" fill="#4285F4"/>
+  <text x="700" y="45" fill="white" font-size="18" text-anchor="middle">⎈</text>
+  <text x="700" y="78" fill="#333" font-size="13" text-anchor="middle" font-weight="bold">Kubernetes Engine</text>
+
+  <!-- Kubernetes Cluster (outer blue) -->
+  <rect x="20" y="90" width="1360" height="890" rx="12" fill="#E3F2FD" stroke="#90CAF9" stroke-width="2"/>
+  <text x="40" y="115" fill="#333" font-size="14" font-weight="bold">Kubernetes Cluster</text>
+
+  <!-- Namespace (pink) -->
+  <rect x="40" y="125" width="1320" height="840" rx="10" fill="#FCE4EC" stroke="#F48FB1" stroke-width="1.5"/>
+  <text x="60" y="148" fill="#333" font-size="13" font-weight="bold">Namespace: ai-fabric</text>
+
+  <!-- ====== CLIENT ====== -->
+  <rect x="55" y="160" width="90" height="70" rx="6" fill="white" stroke="#ccc" stroke-width="1"/>
+  <text x="100" y="188" fill="#333" font-size="22" text-anchor="middle">🖥️</text>
+  <text x="100" y="218" fill="#333" font-size="11" text-anchor="middle">Client</text>
+  <!-- client arrow -->
+  <line x1="145" y1="195" x2="190" y2="195" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ====== NGINX / INGRESS ====== -->
+  <rect x="190" y="160" width="220" height="110" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="210" cy="178" r="12" fill="#607D8B"/>
+  <text x="210" y="183" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="310" y="180" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Service&gt; Nginx / Ingress</text>
+  <text x="310" y="197" fill="#555" font-size="10" text-anchor="middle">[default: LoadBalancer]</text>
+  <text x="310" y="213" fill="#555" font-size="10" text-anchor="middle">ports:</text>
+  <text x="310" y="228" fill="#555" font-size="10" text-anchor="middle">80 - HTTP / 443 - HTTPS</text>
+  <!-- nginx down arrow -->
+  <line x1="300" y1="270" x2="300" y2="310" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Nginx StatefulSet -->
+  <rect x="190" y="310" width="220" height="60" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="210" cy="340" r="12" fill="#607D8B"/>
+  <text x="210" y="345" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="310" y="335" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Deployment&gt; Nginx</text>
+  <text x="310" y="352" fill="#555" font-size="10" text-anchor="middle">[1 replica]</text>
+
+  <!-- nginx -> ConfigMap -->
+  <line x1="300" y1="370" x2="300" y2="410" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="190" y="410" width="220" height="50" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="210" cy="435" r="12" fill="#455A64"/>
+  <text x="210" y="440" fill="white" font-size="9" text-anchor="middle">CM</text>
+  <text x="310" y="430" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;ConfigMap&gt; Nginx</text>
+  <text x="310" y="447" fill="#555" font-size="10" text-anchor="middle">configuration &amp; routes</text>
+
+  <!-- ====== KEYCLOAK ====== -->
+  <line x1="410" y1="195" x2="450" y2="195" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="450" y="160" width="220" height="110" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="470" cy="178" r="12" fill="#607D8B"/>
+  <text x="470" y="183" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="560" y="180" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Service&gt; Keycloak</text>
+  <text x="560" y="197" fill="#555" font-size="10" text-anchor="middle">[default: ClusterIP]</text>
+  <text x="560" y="213" fill="#555" font-size="10" text-anchor="middle">ports: 8080</text>
+  <line x1="560" y1="270" x2="560" y2="310" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="450" y="310" width="220" height="60" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="470" cy="340" r="12" fill="#607D8B"/>
+  <text x="470" y="345" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="560" y="335" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Deployment&gt; Keycloak</text>
+  <text x="560" y="352" fill="#555" font-size="10" text-anchor="middle">[1 replica]</text>
+
+  <line x1="560" y1="370" x2="560" y2="410" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="450" y="410" width="220" height="50" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="470" cy="435" r="12" fill="#455A64"/>
+  <text x="470" y="440" fill="white" font-size="9" text-anchor="middle">S</text>
+  <text x="560" y="430" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Secret&gt; Keycloak</text>
+  <text x="560" y="447" fill="#555" font-size="10" text-anchor="middle">admin credentials</text>
+
+  <!-- ====== API SERVICE ====== -->
+  <line x1="670" y1="195" x2="710" y2="195" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="710" y="160" width="220" height="110" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="730" cy="178" r="12" fill="#607D8B"/>
+  <text x="730" y="183" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="820" y="180" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Service&gt; CAMS API</text>
+  <text x="820" y="197" fill="#555" font-size="10" text-anchor="middle">[default: ClusterIP]</text>
+  <text x="820" y="213" fill="#555" font-size="10" text-anchor="middle">ports: 8000</text>
+  <line x1="820" y1="270" x2="820" y2="310" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="710" y="310" width="220" height="60" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="730" cy="340" r="12" fill="#607D8B"/>
+  <text x="730" y="345" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="820" y="332" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Deployment&gt; CAMS API</text>
+  <text x="820" y="349" fill="#555" font-size="10" text-anchor="middle">+ API Worker</text>
+  <text x="820" y="364" fill="#555" font-size="10" text-anchor="middle">[1 replica each]</text>
+
+  <line x1="820" y1="370" x2="820" y2="410" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="710" y="410" width="220" height="50" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="730" cy="435" r="12" fill="#455A64"/>
+  <text x="730" y="440" fill="white" font-size="9" text-anchor="middle">CM</text>
+  <text x="820" y="430" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;ConfigMap&gt; CAMS API</text>
+  <text x="820" y="447" fill="#555" font-size="10" text-anchor="middle">app configuration</text>
+
+  <!-- ====== AGENT REGISTRY ====== -->
+  <line x1="930" y1="195" x2="970" y2="195" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="970" y="160" width="220" height="110" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="990" cy="178" r="12" fill="#607D8B"/>
+  <text x="990" y="183" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="1080" y="180" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Service&gt; Agent Registry</text>
+  <text x="1080" y="197" fill="#555" font-size="10" text-anchor="middle">[default: ClusterIP]</text>
+  <text x="1080" y="213" fill="#555" font-size="10" text-anchor="middle">ports: 8080</text>
+  <line x1="1080" y1="270" x2="1080" y2="310" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="970" y="310" width="220" height="60" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="990" cy="340" r="12" fill="#607D8B"/>
+  <text x="990" y="345" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="1080" y="332" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Deployment&gt; Agent</text>
+  <text x="1080" y="349" fill="#555" font-size="10" text-anchor="middle">Registry + UI</text>
+  <text x="1080" y="364" fill="#555" font-size="10" text-anchor="middle">[1 replica each]</text>
+
+  <line x1="1080" y1="370" x2="1080" y2="410" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="970" y="410" width="220" height="50" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="990" cy="435" r="12" fill="#455A64"/>
+  <text x="990" y="440" fill="white" font-size="9" text-anchor="middle">CM</text>
+  <text x="1080" y="430" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;ConfigMap&gt; Agent</text>
+  <text x="1080" y="447" fill="#555" font-size="10" text-anchor="middle">Registry configuration</text>
+
+  <!-- ====== SECOND ROW ====== -->
+
+  <!-- TASK MGMT -->
+  <rect x="190" y="540" width="220" height="110" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="210" cy="558" r="12" fill="#607D8B"/>
+  <text x="210" y="563" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="300" y="560" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Service&gt; Task Mgmt</text>
+  <text x="300" y="577" fill="#555" font-size="10" text-anchor="middle">[default: ClusterIP]</text>
+  <text x="300" y="593" fill="#555" font-size="10" text-anchor="middle">ports: Java :8081</text>
+  <text x="300" y="609" fill="#555" font-size="10" text-anchor="middle">       Python :8082</text>
+  <line x1="300" y1="650" x2="300" y2="690" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="190" y="690" width="220" height="60" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="210" cy="720" r="12" fill="#607D8B"/>
+  <text x="210" y="725" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="300" y="715" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Deployment&gt; Task Mgmt</text>
+  <text x="300" y="732" fill="#555" font-size="10" text-anchor="middle">Java + Python [1 replica]</text>
+
+  <!-- LITELLM -->
+  <rect x="450" y="540" width="220" height="110" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="470" cy="558" r="12" fill="#607D8B"/>
+  <text x="470" y="563" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="560" y="560" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Service&gt; LiteLLM</text>
+  <text x="560" y="577" fill="#555" font-size="10" text-anchor="middle">[default: ClusterIP]</text>
+  <text x="560" y="593" fill="#555" font-size="10" text-anchor="middle">ports: 4000</text>
+  <line x1="560" y1="650" x2="560" y2="690" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="450" y="690" width="220" height="60" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="470" cy="720" r="12" fill="#607D8B"/>
+  <text x="470" y="725" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="560" y="715" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Deployment&gt; LiteLLM</text>
+  <text x="560" y="732" fill="#555" font-size="10" text-anchor="middle">[1 replica]</text>
+
+  <line x1="560" y1="750" x2="560" y2="790" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="450" y="790" width="220" height="50" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="470" cy="815" r="12" fill="#455A64"/>
+  <text x="470" y="820" fill="white" font-size="9" text-anchor="middle">S</text>
+  <text x="560" y="810" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Secret&gt; LiteLLM</text>
+  <text x="560" y="827" fill="#555" font-size="10" text-anchor="middle">LLM API keys</text>
+
+  <!-- CONTROL TOWER -->
+  <rect x="710" y="540" width="220" height="110" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="730" cy="558" r="12" fill="#607D8B"/>
+  <text x="730" y="563" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="820" y="560" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Service&gt; Control Tower</text>
+  <text x="820" y="577" fill="#555" font-size="10" text-anchor="middle">[default: ClusterIP]</text>
+  <text x="820" y="593" fill="#555" font-size="10" text-anchor="middle">ports: 8080</text>
+  <line x1="820" y1="650" x2="820" y2="690" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="710" y="690" width="220" height="60" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="730" cy="720" r="12" fill="#607D8B"/>
+  <text x="730" y="725" fill="white" font-size="10" text-anchor="middle">S</text>
+  <text x="820" y="715" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Deployment&gt; Control Tower</text>
+  <text x="820" y="732" fill="#555" font-size="10" text-anchor="middle">[1 replica]</text>
+
+  <!-- SEED DATA / INIT -->
+  <rect x="970" y="540" width="220" height="110" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="990" cy="558" r="12" fill="#607D8B"/>
+  <text x="990" y="563" fill="white" font-size="10" text-anchor="middle">J</text>
+  <text x="1080" y="560" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Job&gt; Seed Data</text>
+  <text x="1080" y="577" fill="#555" font-size="10" text-anchor="middle">Init container</text>
+  <text x="1080" y="593" fill="#555" font-size="10" text-anchor="middle">runs once on deploy</text>
+  <line x1="1080" y1="650" x2="1080" y2="690" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="970" y="690" width="220" height="50" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <circle cx="990" cy="715" r="12" fill="#455A64"/>
+  <text x="990" y="720" fill="white" font-size="9" text-anchor="middle">S</text>
+  <text x="1080" y="710" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;Secret&gt; DB credentials</text>
+  <text x="1080" y="727" fill="#555" font-size="10" text-anchor="middle">PostgreSQL user/password</text>
+
+  <!-- ====== SHARED PVC ROW ====== -->
+  <rect x="190" y="860" width="220" height="50" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <text x="300" y="880" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;PVC&gt; App data</text>
+  <text x="300" y="897" fill="#555" font-size="10" text-anchor="middle">[default: 10Gi]</text>
+
+  <rect x="450" y="860" width="220" height="50" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <text x="560" y="880" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;PVC&gt; PostgreSQL data</text>
+  <text x="560" y="897" fill="#555" font-size="10" text-anchor="middle">[default: 20Gi]</text>
+
+  <rect x="710" y="860" width="220" height="50" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <text x="820" y="880" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;PVC&gt; Keycloak data</text>
+  <text x="820" y="897" fill="#555" font-size="10" text-anchor="middle">[default: 5Gi]</text>
+
+  <rect x="970" y="860" width="220" height="50" rx="6" fill="white" stroke="#bbb" stroke-width="1"/>
+  <text x="1080" y="880" fill="#333" font-size="11" font-weight="bold" text-anchor="middle">&lt;PVC&gt; Logs</text>
+  <text x="1080" y="897" fill="#555" font-size="10" text-anchor="middle">[default: 5Gi]</text>
+
+  <!-- PVC arrows -->
+  <line x1="300" y1="750" x2="300" y2="860" stroke="#333" stroke-width="1" stroke-dasharray="4,2" marker-end="url(#arr)"/>
+  <line x1="820" y1="750" x2="820" y2="860" stroke="#333" stroke-width="1" stroke-dasharray="4,2" marker-end="url(#arr)"/>
+
+  <!-- Arrow marker -->
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#333"/>
+    </marker>
+  </defs>
+
+</svg>

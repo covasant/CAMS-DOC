@@ -1,0 +1,7 @@
+#TRK-4F41B1FD
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-keycloak-config
+data:
+  hostname: {{ .Values.keycloak.hostname | quote }}

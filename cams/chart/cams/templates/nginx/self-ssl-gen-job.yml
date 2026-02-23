@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-cert-gen-job
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Release.Name }}-cert-gen-sa
+      restartPolicy: Never
+      containers:
+      - name: cert-gen
+        # This image has both OpenSSL and Kubectl
+        image: "bitnami/kubectl:latest"
+        env:
+          - name: APP_DOMAIN
+            value: "{{ .Values.app.baseDomain }}"
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            echo "Starting Certificate Generation..."
+            
+            # 1. Define the Secret Name (Must match what Nginx looks for)
+            SECRET_NAME="{{ .Release.Name }}-tls-secret"
+            
+            # 2. Check if secret already exists (don't overwrite on upgrades if valid)
+            if kubectl get secret $SECRET_NAME; then
+              echo "Secret $SECRET_NAME already exists. Exiting."
+              exit 0
+            fi
+            
+            # 3. Define the Domain (CN)
+            # We use the service name as the domain.
+            DOMAIN="aifabric.${APP_DOMAIN}"
+            
+            # 4. Generate the Cert and Key
+            echo "Generating self-signed cert for $DOMAIN..."
+            openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+              -keyout /tmp/tls.key \
+              -out /tmp/tls.crt \
+              -subj "/CN=$DOMAIN/O=covasant"
+            
+            # 5. Save to Kubernetes Secret
+            echo "Creating Kubernetes Secret..."
+            kubectl create secret tls $SECRET_NAME \
+              --key /tmp/tls.key \
+              --cert /tmp/tls.crt
+            
+            echo "Done."

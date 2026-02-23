@@ -1,0 +1,215 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-postgresql"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-postgresql
+      image: postgres:13
+      command:
+        - sh
+        - -c
+        - |
+          pg_isready -h {{ .Release.Name }}-postgresql -p 5432 -U postgres
+          if [ $? -eq 0 ]; then
+            echo "PostgreSQL is ready"
+            exit 0
+          else
+            echo "PostgreSQL is not ready"
+            exit 1
+          fi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-keycloak"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-keycloak
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          curl -f -k http://{{ .Release.Name }}-keycloak:80/auth/ || exit 1
+          echo "Keycloak is accessible"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-nginx"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-nginx
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          curl -f -k https://{{ .Release.Name }}-nginx:443/ || exit 1
+          echo "Nginx is accessible"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-jauth"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-jauth
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          curl -f http://{{ .Release.Name }}-jauth:8080/actuator/health || exit 1
+          echo "Java Auth Management is healthy"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-jtmgmt"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-jtmgmt
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          curl -f http://{{ .Release.Name }}-jtmgmt:8081/actuator/health || exit 1
+          echo "Java Tenant Management is healthy"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-pytmgmt"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-pytmgmt
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          curl -f http://{{ .Release.Name }}-pytmgmt:8000/health || exit 1
+          echo "Python Tenant Management is healthy"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-camsapi"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-camsapi
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          curl -f http://{{ .Release.Name }}-camsapi:8000/health || exit 1
+          echo "CAMS API is healthy"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-agentregistry"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-agentregistry
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          curl -f http://{{ .Release.Name }}-agentregistry:5000/health || exit 1
+          echo "Agent Registry API is healthy"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-agentregistryui"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-agentregistryui
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          curl -f http://{{ .Release.Name }}-agentregistryui:80/ || exit 1
+          echo "Agent Registry UI is accessible"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-litellm"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-litellm
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          curl -f http://{{ .Release.Name }}-litellm:4000/health || exit 1
+          echo "LiteLLM is healthy"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-controltower"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-controltower
+      image: curlimages/curl:latest
+      command:
+        - sh
+        - -c
+        - |
+          curl -f http://{{ .Release.Name }}-controltower:80/ || exit 1
+          echo "Control Tower UI is accessible"
