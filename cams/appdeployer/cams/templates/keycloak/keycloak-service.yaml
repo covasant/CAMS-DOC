@@ -1,0 +1,21 @@
+#TRK-4F41B1FD
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-keycloak
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "keycloak.labels.app" . }}
+    component: keycloak
+    name: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ include "keycloak.labels.app" . }}
+    component: keycloak
+    name: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP

@@ -1,0 +1,482 @@
+applicationApiVersion: v1beta1
+
+x-google-marketplace:
+  applicationApiVersion: v1beta1
+  schemaVersion: v2
+  deployerServiceAccount:
+    description: >
+      Deployer requires broad cluster-scoped permissions to install CAMS,
+      including CRDs, RBAC resources, namespaces, webhooks and supporting
+      infrastructure components.
+    roles:
+      - type: Role
+        rulesType: CUSTOM
+        rules:
+          - apiGroups: ['*']
+            resources: ['*']
+            verbs: ['*']
+
+  # MUST be valid semver (x.y.z)
+  publishedVersion: "2.0.0"
+
+  publishedVersionMetadata:
+    releaseNote: >-
+      Initial CAMS release with Keycloak and PostgreSQL.
+    releaseTypes:
+      - Feature
+    recommended: false
+
+  # ----------------------------------
+  # Images used by this application
+  # ----------------------------------
+  images:
+    '':
+      properties:
+        keycloak.image.repository:
+          type: REPO_WITH_REGISTRY
+        keycloak.image.tag:
+          type: TAG
+
+    postgresql:
+      properties:
+        postgresql.image.repo:
+          type: REPO_WITH_REGISTRY
+        postgresql.image.tag:
+          type: TAG
+
+    jauth:
+      properties:
+        jauth.image.repository:
+          type: REPO_WITH_REGISTRY
+        jauth.image.tag:
+          type: TAG
+
+    jtmgmt:
+      properties:
+        jtmgmt.image.repository:
+          type: REPO_WITH_REGISTRY
+        jtmgmt.image.tag:
+          type: TAG
+
+    pytmgmt:
+      properties:
+        pytmgmt.image.repository:
+          type: REPO_WITH_REGISTRY
+        pytmgmt.image.tag:
+          type: TAG
+
+    camsapi:
+      properties:
+        camsapi.image.repository:
+          type: REPO_WITH_REGISTRY
+        camsapi.image.tag:
+          type: TAG
+
+    camsapiworker:
+      properties:
+        camsapiworker.image.repository:
+          type: REPO_WITH_REGISTRY
+        camsapiworker.image.tag:
+          type: TAG
+
+    agentregistry:
+      properties:
+        agentregistry.image.repository:
+          type: REPO_WITH_REGISTRY
+        agentregistry.image.tag:
+          type: TAG
+
+    agentregistryui:
+      properties:
+        agentregistryui.image.repository:
+          type: REPO_WITH_REGISTRY
+        agentregistryui.image.tag:
+          type: TAG
+
+    nginx:
+      properties:
+        nginx.image.repository:
+          type: REPO_WITH_REGISTRY
+        nginx.image.tag:
+          type: TAG
+
+    litellm:
+      properties:
+        litellm.image.repository:
+          type: REPO_WITH_REGISTRY
+        litellm.image.tag:
+          type: TAG
+
+    controltower:
+      properties:
+        controltower.image.repository:
+          type: REPO_WITH_REGISTRY
+        controltower.image.tag:
+          type: TAG
+    
+    
+
+# =====================================================
+# User-configurable / Helm values
+# =====================================================
+properties:
+  # ----------------------
+  # Required fields
+  # ----------------------
+  name:
+    type: string
+    description: Application name
+    x-google-marketplace:
+      type: NAME
+
+  namespace:
+    type: string
+    description: Kubernetes namespace
+    default: default
+    x-google-marketplace:
+      type: NAMESPACE
+
+  # ----------------------
+  # Networking (NEW SECTION)
+  # ----------------------
+
+  app.baseDomain:
+    title: Base Domain Name
+    type: string
+    description: >
+      The base domain for the application (e.g., "example.com").
+      The system will automatically create subdomains (e.g., auth.example.com, camsapi.example.com).
+      
+      IMPORTANT: You must configure a Wildcard DNS A Record (*.example.com) 
+      pointing to the Static IP selected above.
+    pattern: '^([a-z0-9]([-a-z0-9]*[a-z0-9])?\.)+[a-z]{2,}$'
+    default: cams.covasant.io
+
+  app.exposeNginxService:
+    title: Expose Nginx Service
+    type: boolean
+    description: >
+      Enable this option to expose the Nginx service externally.To Access with Application from outside
+      When enabling this choose either self-signed cert or useBringYourOwnCert.
+      Don't use both. If self-signed is opted change the base domain to domain value you need
+      If disabled, the Nginx service will only be accessible within the cluster.
+    default: false
+
+  app.useSelfSignedCert:
+    title: Use Self-Signed Certificate
+    type: boolean
+    description: >
+      Enable this option to automatically generate self-signed SSL certificates for HTTPS.
+      NOTE: This option is mutually exclusive with 'Use Bring Your Own Certificate'.
+      If you enable 'Bring Your Own Certificate', this will be ignored.
+    default: false
+
+  app.useBringYourOwnCert:
+    title: Use Bring Your Own Certificate
+    type: boolean
+    description: >
+      Enable this option to bring your own SSL certificate.
+      You must provide both certificate and private key below.
+      NOTE: This takes precedence over self-signed certificates.
+    default: false
+
+  app.bringYourOwntlsCert:
+    title: TLS Certificate (PEM format)
+    type: string
+    description: >
+      Paste your SSL certificate in PEM format (including -----BEGIN CERTIFICATE----- and -----END CERTIFICATE-----).
+      Required if 'Use Bring Your Own Certificate' is enabled.
+      Leave empty when using self-signed certificates.
+    default: ""
+    x-google-marketplace:
+      type: STRING
+
+  app.bringYourOwntlsKey:
+    title: TLS Private Key (PEM format)
+    type: string
+    description: >
+      Paste your SSL private key in PEM format (including -----BEGIN PRIVATE KEY----- and -----END PRIVATE KEY-----).
+      Required if 'Use Bring Your Own Certificate' is enabled.
+      Leave empty when using self-signed certificates.
+    default: ""
+    x-google-marketplace:
+      type: STRING
+
+
+  # ----------------------
+  # Keycloak
+  # ----------------------
+  keycloak.replicas:
+    type: integer
+    description: Number of Keycloak replicas
+    default: 1
+    minimum: 1
+    maximum: 3
+
+  keycloak.hostname:
+    type: string
+    description: Public hostname for Keycloak (e.g., auth.example.com)
+    default: ""
+
+  keycloak.resources.requests.cpu:
+    type: string
+    default: "1000m"
+
+  keycloak.resources.requests.memory:
+    type: string
+    default: "512Mi"
+
+  keycloak.resources.limits.cpu:
+    type: string
+    default: "1000m"
+
+  keycloak.resources.limits.memory:
+    type: string
+    default: "1Gi"
+
+  # ----------------------
+  # PostgreSQL
+  # ----------------------
+  postgresql.persistence.storageClass:
+    type: string
+    description: StorageClass for PostgreSQL PVC
+    default: standard
+    x-google-marketplace:
+      type: STORAGE_CLASS
+      storageClass:
+        type: SSD 
+
+  postgresql.persistence.size:
+    type: string
+    description: PostgreSQL persistent volume size
+    default: 20Gi
+    pattern: '^[1-9][0-9]*(\.[0-9]+)?[TGM]i?$'
+
+
+  # ----------------------
+  # Java Auth Management
+  # ----------------------
+  jauth.replicas:
+    type: integer
+    description: Number of Java Auth Management replicas
+    default: 1
+    minimum: 1
+    maximum: 3
+
+  jauth.resources.requests.cpu:
+    type: string
+    default: "500m"
+
+  jauth.resources.requests.memory:
+    type: string
+    default: "512Mi"
+
+  jauth.resources.limits.cpu:
+    type: string
+    default: "1000m"
+
+  jauth.resources.limits.memory:
+    type: string
+    default: "1Gi"
+
+  # ----------------------
+  # Java Tenant Management
+  # ----------------------
+  jtmgmt.replicas:
+    type: integer
+    description: Number of Java Tenant Management replicas
+    default: 1
+    minimum: 1
+    maximum: 3
+
+  jtmgmt.resources.requests.cpu:
+    type: string
+    default: "500m"
+
+  jtmgmt.resources.requests.memory:
+    type: string
+    default: "512Mi"
+
+  jtmgmt.resources.limits.cpu:
+    type: string
+    default: "1000m"
+
+  jtmgmt.resources.limits.memory:
+    type: string
+    default: "1Gi"
+
+  # ----------------------
+  # Python Tenant Management
+  # ----------------------
+  pytmgmt.replicas:
+    type: integer
+    description: Number of Python Tenant Management replicas
+    default: 1
+    minimum: 1
+    maximum: 3
+
+  pytmgmt.resources.requests.memory:
+    type: string
+    default: "256Mi"
+
+  pytmgmt.resources.limits.memory:
+    type: string
+    default: "512Mi"
+
+  # ----------------------
+  # CAMS API
+  # ----------------------
+  camsapi.replicas:
+    type: integer
+    description: Number of CAMS API replicas
+    default: 1
+    minimum: 1
+    maximum: 3
+
+  camsapi.resources.requests.cpu:
+    type: string
+    default: "500m"
+
+  camsapi.resources.requests.memory:
+    type: string
+    default: "512Mi"
+
+  camsapi.resources.limits.cpu:
+    type: string
+    default: "1000m"
+
+  camsapi.resources.limits.memory:
+    type: string
+    default: "1Gi"
+
+  # ----------------------
+  # CAMS API Worker
+  # ----------------------
+  camsapiworker.resources.requests.cpu:
+    type: string
+    default: "500m"
+
+  camsapiworker.resources.requests.memory:
+    type: string
+    default: "512Mi"
+
+  camsapiworker.resources.limits.cpu:
+    type: string
+    default: "1000m"
+
+  camsapiworker.resources.limits.memory:
+    type: string
+    default: "1Gi"
+
+  # ----------------------
+  # Agent Registry API
+  # ----------------------
+  agentregistry.replicas:
+    type: integer
+    description: Number of Agent Registry API replicas
+    default: 1
+    minimum: 1
+    maximum: 3
+
+  agentregistry.resources.requests.cpu:
+    type: string
+    default: "500m"
+
+  agentregistry.resources.requests.memory:
+    type: string
+    default: "512Mi"
+
+  agentregistry.resources.limits.cpu:
+    type: string
+    default: "1000m"
+
+  agentregistry.resources.limits.memory:
+    type: string
+    default: "1Gi"
+
+  # ----------------------
+  # Agent Registry UI
+  # ----------------------
+  agentregistryui.replicas:
+    type: integer
+    description: Number of Agent Registry UI replicas
+    default: 1
+    minimum: 1
+    maximum: 3
+
+  agentregistryui.resources.requests.memory:
+    type: string
+    default: "256Mi"
+
+  agentregistryui.resources.limits.memory:
+    type: string
+    default: "512Mi"
+
+  # ----------------------
+  # Nginx
+  # ----------------------
+  nginx.replicas:
+    type: integer
+    description: Number of Nginx replicas
+    default: 1
+    minimum: 1
+    maximum: 3
+
+  nginx.resources.requests.cpu:
+    type: string
+    default: "250m"
+
+  nginx.resources.requests.memory:
+    type: string
+    default: "128Mi"
+
+  nginx.resources.limits.cpu:
+    type: string
+    default: "500m"
+
+  nginx.resources.limits.memory:
+    type: string
+    default: "256Mi"
+
+  # ----------------------
+  # LiteLLM
+  # ----------------------
+  litellm.replicas:
+    type: integer
+    description: Number of LiteLLM replicas
+    default: 1
+    minimum: 1
+    maximum: 3
+
+  litellm.resources.requests.memory:
+    type: string
+    default: "5Gi"
+
+  litellm.resources.limits.memory:
+    type: string
+    default: "5Gi"
+
+  # ----------------------
+  # Control Tower UI
+  # ----------------------
+  controltower.replicas:
+    type: integer
+    description: Number of Control Tower UI replicas
+    default: 1
+    minimum: 1
+    maximum: 3
+
+  controltower.resources.requests.memory:
+    type: string
+    default: "256Mi"
+
+  controltower.resources.limits.memory:
+    type: string
+    default: "512Mi"
+
+required:
+  - name
+  - namespace
+  - app.baseDomain
+  - app.useSelfSignedCert
+  - app.useBringYourOwnCert

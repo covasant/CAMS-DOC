@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-control-tower
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "controltower.labels.app" . }}
+    component: control-tower
+    name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.controltower.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ include "controltower.labels.app" . }}
+      component: control-tower
+      name: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app: {{ include "controltower.labels.app" . }}
+        component: control-tower
+        name: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+      containers:
+        - name: control-tower
+          image: "{{ .Values.controltower.image.repository }}:{{ .Values.controltower.image.tag }}"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          env:
+            - name: registry_api_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/registry"
+            - name: java_auth_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/auth"
+            - name: py_tgmt_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/tenant/python"
+            - name: java_tgmt_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/tenant/java"
+            - name: keycloak_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/auth"
+            - name: cams_api_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/cams"
+            - name: litellm_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/litellm"
+          resources:
+            {{- toYaml .Values.controltower.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            failureThreshold: 3

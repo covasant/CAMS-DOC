@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-cams-api-svc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "camsapi.labels.app" . }}
+    component: cams-api
+    name: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ include "camsapi.labels.app" . }}
+    component: cams-api
+    name: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP

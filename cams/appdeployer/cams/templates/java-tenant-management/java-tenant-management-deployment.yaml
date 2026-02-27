@@ -1,0 +1,175 @@
+#TRK-4F41B1FD
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-jtmgmt
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "jtmgmt.labels.app" . }}
+    component: jtmgmt
+    name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.jtmgmt.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ include "jtmgmt.labels.app" . }}
+      component: jtmgmt
+      name: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app: {{ include "jtmgmt.labels.app" . }}
+        component: jtmgmt
+        name: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+      initContainers:
+      - name: wait-for-secrets
+        image: busybox:latest
+        imagePullPolicy: Always
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting 90 seconds for secrets to be available..."
+          sleep 90
+          echo "Wait complete"
+      {{- if .Values.app.useSelfSignedCert }}
+      - name: import-ssl-cert
+        image: "{{ .Values.jtmgmt.image.repository }}:{{ .Values.jtmgmt.image.tag }}"
+        imagePullPolicy: Always
+        command:
+        - sh
+        - -c
+        - |
+          echo "Importing self-signed certificate into Java trust store..."
+          # Copy the default cacerts to a writable location
+          cp $JAVA_HOME/lib/security/cacerts /tmp/cacerts
+          # Import the certificate
+          keytool -import -trustcacerts -alias nginx-self-signed \
+            -file /etc/ssl/certs/tls.crt \
+            -keystore /tmp/cacerts \
+            -storepass changeit -noprompt
+          # Copy back to shared volume
+          cp /tmp/cacerts /shared/cacerts
+          echo "Certificate imported successfully"
+        {{- if .Values.app.useSelfSignedCert }}
+        volumeMounts:
+        - name: ssl-cert
+          mountPath: /etc/ssl/certs
+          readOnly: true
+        - name: shared-cacerts
+          mountPath: /shared
+        {{- end }}
+      {{- end }}
+      - name: wait-for-postgres
+        image: postgres:17
+        imagePullPolicy: Always
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: DATABASE_PASSWORD
+        command:
+        - sh
+        - -c
+        - |
+          until pg_isready -h {{ .Release.Name }}-postgresql-svc -p 5432 -U postgres; do
+          echo "Waiting for PostgreSQL...";
+          sleep 2;
+          done
+      volumes:
+      {{- if .Values.app.useSelfSignedCert }}
+      - name: ssl-cert
+        secret:
+          secretName: {{ .Release.Name }}-tls-secret
+      - name: shared-cacerts
+        emptyDir: {}
+      {{- end }}
+      containers:
+        - name: jtmgmt
+          image: "{{ .Values.jtmgmt.image.repository }}:{{ .Values.jtmgmt.image.tag }}"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: jtmgmt
+              protocol: TCP
+          {{- if .Values.app.useSelfSignedCert }}
+          volumeMounts:
+          - name: shared-cacerts
+            mountPath: /shared
+          {{- end }}
+          env:
+            {{- if .Values.app.useSelfSignedCert }}
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Djavax.net.ssl.trustStore=/shared/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+            {{- end }}
+            - name: POSTGRES_HOST
+              value: "{{ .Release.Name }}-postgresql-svc"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_DATABASE
+              value: "tenant_master"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-config-envs
+                  key: DATABASE_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-config-envs
+                  key: DATABASE_PASSWORD
+            - name: AUTHMGMT_SERVICE_URL
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/auth/"
+            - name: APP_API_URL
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/tenant/java"
+            - name: KEYCLOAK_SERVER_URL
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/auth"
+            - name: KEYCLOAK_REALM_NAME
+              value: "master"
+            - name: KEYCLOAK_CLIENT_ID
+              value: "aifabric"
+            - name: KEYCLOAK_CLIENT_SECRET
+              value: "rNmd2YtTn7nRVXjrXCdX5KuEvDhNoaAh"
+            - name: MAIL_HOST
+              value: "smtp.gmail.com"
+            - name: MAIL_PORT
+              value: "587"
+            - name: MAIL_USERNAME
+              value: "onboarding.covasant@gmail.com"
+            - name: MAIL_PASSWORD
+              value: "yrco mlqq sutr ytqy"
+            - name: DOMAIN
+              value: "demo.gcp.covasant.io"
+            - name: AGENT_DEPLOYER_URL
+              value: "http://dummy"
+            
+          resources:
+            {{- toYaml .Values.jtmgmt.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /swagger-ui/index.html
+              port: jtmgmt
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /swagger-ui/index.html
+              port: jtmgmt
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            failureThreshold: 3

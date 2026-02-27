@@ -1,6 +1,0 @@
-apiVersion: v2
-name: cams-test
-description: Minimal test chart for CAMS Marketplace validation
-type: application
-version: 0.1.0
-appVersion: "1.0"

@@ -1,0 +1,163 @@
+app:
+  baseDomain: cams.covasant.io # change this 
+  exposeNginxService: false
+  # Set to true when using self-signed certificates
+  # Set to false when using CA-signed certificates (GoDaddy, Let's Encrypt, etc.)
+  useSelfSignedCert: false
+  # Set to true when bringing your own certificate
+  useBringYourOwnCert: false
+  # TLS certificate in PEM format (for bringing your own certificate)
+  bringYourOwntlsCert: ""
+  # TLS private key in PEM format (for bringing your own certificate)
+  bringYourOwntlsKey: ""
+
+keycloak:
+  image:
+    repository: us-docker.pkg.dev/konaai-public/cams/keycloak-mp
+    tag: "2.0"
+  replicas: 1
+  port: 80
+  hostname: "" # enables customers to set their own dns for keycloak
+  resources:
+    requests:
+      cpu: 1000m
+      memory: "512Mi"
+    limits:
+      memory: "1Gi"
+      cpu: 1000m
+
+postgresql:
+  image:
+    repo: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-seed-data
+    tag: "2.0"
+  persistence:
+    storageClass: standard
+    size: 20Gi
+
+postgresqlseeddata:
+  image:
+    repo: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-seed-data
+    tag: "2.0"
+
+jauth:
+  image:
+    repository: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-java-auth
+    tag: "2.0"
+  replicas: 1
+  resources:
+    requests:
+      cpu: 500m
+      memory: "512Mi"
+    limits:
+      memory: "1Gi"
+      cpu: 1000m
+
+jtmgmt:
+  image:
+    repository: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-java-tmgmt
+    tag: "2.0"
+  resources:
+    requests:
+      cpu: 500m
+      memory: "512Mi"
+    limits:
+      memory: "1Gi"
+      cpu: 1000m
+
+pytmgmt:
+  image:
+    repository: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-py-tmgmt
+    tag: "2.0"
+  replicas: 1
+  resources:
+    requests:
+      memory: "256Mi"
+    limits:
+      memory: "512Mi"
+
+agentregistry:
+  image:
+    repository: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-agentregistry-api
+    tag: "2.0"
+  replicas: 1
+  resources:
+    requests:
+      cpu: 500m
+      memory: "512Mi"
+    limits:
+      memory: "1Gi"
+      cpu: 1000m
+
+camsapi:
+  image:
+    repository: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-api
+    tag: "2.0"
+  replicas: 1
+  resources:
+    requests:
+      cpu: 500m
+      memory: "512Mi"
+    limits:
+      memory: "1Gi"
+      cpu: 1000m
+
+camsapiworker:
+  image:
+    repository: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-api-worker
+    tag: "2.0"
+  replicas: 1
+  resources:
+    requests:
+      cpu: 500m
+      memory: "512Mi"
+    limits:
+      memory: "1Gi"
+      cpu: 1000m
+
+agentregistryui:
+  image:
+    repository: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-agentregistry-ui
+    tag: "2.0"
+  replicas: 1
+  resources:
+    requests:
+      memory: "256Mi"
+    limits:
+      memory: "512Mi"
+
+
+nginx:
+  image:
+    repository: us-docker.pkg.dev/konaai-public/cams/cams/nginx
+    tag: "2.0"
+  replicas: 1
+  port: 443
+  resources:
+    requests:
+      cpu: 250m
+      memory: "128Mi"
+    limits:
+      memory: "256Mi"
+      cpu: 500m
+
+litellm:
+  image:
+    repository: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-litellm
+    tag: "2.0"
+  replicas: 1
+  resources:
+    requests:
+      memory: "5Gi"
+    limits:
+      memory: "5Gi"
+
+controltower:
+  image:
+    repository: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-controltower-ui
+    tag: "2.0"
+  replicas: 1
+  resources:
+    requests:
+      memory: "256Mi"
+    limits:
+      memory: "512Mi"

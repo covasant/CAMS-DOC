@@ -1,0 +1,149 @@
+#TRK-4F41B1FD
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-jauth
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "jauth.labels.app" . }}
+    component: jauth
+    name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.jauth.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ include "jauth.labels.app" . }}
+      component: jauth
+      name: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app: {{ include "jauth.labels.app" . }}
+        component: jauth
+        name: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+      initContainers:
+      {{- if .Values.app.useSelfSignedCert }}
+      - name: import-ssl-cert
+        image: "{{ .Values.jauth.image.repository }}:{{ .Values.jauth.image.tag }}"
+        imagePullPolicy: Always
+        command:
+        - sh
+        - -c
+        - |
+          echo "Importing self-signed certificate into Java trust store..."
+          # Copy the default cacerts to a writable location
+          cp $JAVA_HOME/lib/security/cacerts /tmp/cacerts
+          # Import the certificate
+          keytool -import -trustcacerts -alias nginx-self-signed \
+            -file /etc/ssl/certs/tls.crt \
+            -keystore /tmp/cacerts \
+            -storepass changeit -noprompt
+          # Copy back to shared volume
+          cp /tmp/cacerts /shared/cacerts
+          echo "Certificate imported successfully"
+        {{- if .Values.app.useSelfSignedCert }}
+        volumeMounts:
+        - name: ssl-cert
+          mountPath: /etc/ssl/certs
+          readOnly: true
+        - name: shared-cacerts
+          mountPath: /shared
+        {{- end }}
+      {{- end }}
+      - name: wait-for-postgres
+        image: postgres:17
+        imagePullPolicy: Always
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: DATABASE_PASSWORD
+        command:
+        - sh
+        - -c
+        - |
+          until pg_isready -h {{ .Release.Name }}-postgresql-svc -p 5432 -U postgres; do
+          echo "Waiting for PostgreSQL...";
+          sleep 2;
+          done
+      volumes:
+      {{- if .Values.app.useSelfSignedCert }}
+      - name: ssl-cert
+        secret:
+          secretName: {{ .Release.Name }}-tls-secret
+      - name: shared-cacerts
+        emptyDir: {}
+      {{- end }}
+      containers:
+        - name: jauth
+          image: "{{ .Values.jauth.image.repository }}:{{ .Values.jauth.image.tag }}"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: jauth
+              protocol: TCP
+          {{- if .Values.app.useSelfSignedCert }}
+          volumeMounts:
+          - name: shared-cacerts
+            mountPath: /shared
+          {{- end }}
+          env:
+            {{- if .Values.app.useSelfSignedCert }}
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Djavax.net.ssl.trustStore=/shared/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+            {{- end }}
+            - name: POSTGRES_HOST
+              value: "{{ .Release.Name }}-postgresql-svc"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_DATABASE
+              value: "tenant_master"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-config-envs
+                  key: DATABASE_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-config-envs
+                  key: DATABASE_PASSWORD
+            - name: KEYCLOAK_CLIENT_ID
+              value: "fastapi-admin-client"
+            - name: TENANT_MANAGEMENT_API_URL
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/tenant/java"
+            - name: AUTH_API_URL
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/auth"
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-config-envs
+          resources:
+            {{- toYaml .Values.jauth.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /swagger-ui/index.html
+              port: jauth
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /swagger-ui/index.html
+              port: jauth
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            failureThreshold: 3

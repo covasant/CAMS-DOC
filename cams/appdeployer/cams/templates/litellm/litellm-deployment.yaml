@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-litellm
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "litellm.labels.app" . }}
+    component: litellm
+    name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.litellm.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ include "litellm.labels.app" . }}
+      component: litellm
+      name: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app: {{ include "litellm.labels.app" . }}
+        component: litellm
+        name: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+
+      containers:
+      - name: litellm
+        image: "{{ .Values.litellm.image.repository }}:{{ .Values.litellm.image.tag }}"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4000
+          name: http
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://postgres:$(DATABASE_PASSWORD)@{{ .Release.Name }}-postgresql-svc:5432/litellm"
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: DATABASE_PASSWORD
+        - name: STORE_MODEL_IN_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: STORE_MODEL_IN_DB
+        - name: LITELLM_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: LITELLM_API_KEY
+        - name: LITELLM_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: LITELLM_KEY
+        - name: LITELLM_LICENSE
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: LITELLM_LICENSE
+        - name: LITELLM_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: LITELLM_MASTER_KEY
+        - name: LITELLM_SALT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: LITELLM_SALT_KEY
+        - name: LLM_PROVIDER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: LLM_PROVIDER
+        - name: GUARDRAILS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: GUARDRAILS_API_KEY
+
+        envFrom:
+        - secretRef:
+            name: {{ .Release.Name }}-config-envs
+
+        resources:
+          {{- toYaml .Values.litellm.resources | nindent 12 }}
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 200
+          periodSeconds: 20
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 200
+          periodSeconds: 20
+          failureThreshold: 3

@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-tester"
+  labels:
+    app.kubernetes.io/name: "{{ .Release.Name }}"
+  annotations:
+    marketplace.cloud.google.com/verification: test
+spec:
+  restartPolicy: Never
+  serviceAccountName: {{ .Release.Name }}-test-sa
+  containers:
+  - name: tester
+    image: "us-docker.pkg.dev/konaai-public/cams/cams/tester:2.0.0"
+    imagePullPolicy: Always
+    env:
+    - name: NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: APP_INSTANCE_NAME
+      value: {{ .Release.Name }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-test-sa
+  labels:
+    app.kubernetes.io/name: "{{ .Release.Name }}"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-test-role
+  labels:
+    app.kubernetes.io/name: "{{ .Release.Name }}"
+rules:
+- apiGroups: [""]
+  resources: ["services", "endpoints"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-test-rolebinding
+  labels:
+    app.kubernetes.io/name: "{{ .Release.Name }}"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-test-role
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-test-sa
+  namespace: {{ .Release.Namespace }}

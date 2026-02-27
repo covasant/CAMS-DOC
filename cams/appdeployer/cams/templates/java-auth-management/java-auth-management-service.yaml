@@ -1,0 +1,22 @@
+#TRK-4F41B1FD
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-jauth-svc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "jauth.labels.app" . }}
+    component: jauth
+    name: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ include "jauth.labels.app" . }}
+    component: jauth
+    name: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+

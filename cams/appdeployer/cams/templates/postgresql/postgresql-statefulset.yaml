@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-postgresql
+  namespace: {{ .Release.Namespace }}
+  labels: &PostgreSQLLabels
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/component: postgresql-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels: *PostgreSQLLabels
+  serviceName: {{ .Release.Name }}-postgresql-svc
+  template:
+    metadata:
+      labels: *PostgreSQLLabels
+    spec:
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 999 # PostgreSQL user group
+      containers:
+      - name: postgresql-server
+        image: "{{ .Values.postgresql.image.repo }}:{{ .Values.postgresql.image.tag }}"
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 1000Mi
+        ports:
+        - containerPort: 5432
+          name: postgres
+        volumeMounts:
+        - name: {{ .Release.Name }}-postgresql-pvc
+          mountPath: /var/lib/postgresql/data
+        env:
+        - name: "PGDATA"
+          value: "/var/lib/postgresql/data/pgdata"
+        - name: "POSTGRES_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-config-envs
+              key: DATABASE_PASSWORD
+        - name: "POSTGRES_USER"
+          value: "postgres"
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Release.Name }}-postgresql-pvc
+      labels: *PostgreSQLLabels
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: {{ .Values.postgresql.persistence.storageClass }}
+      resources:
+        requests:
+          storage: {{ .Values.postgresql.persistence.size }}

@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-nginx
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "nginx.labels.app" . }}
+    component: nginx
+    name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.nginx.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ include "nginx.labels.app" . }}
+      component: nginx
+      name: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app: {{ include "nginx.labels.app" . }}
+        component: nginx
+        name: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Release.Name }}-nginx-sa
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: {{ .Release.Name }}-nginx-config
+      {{- if or .Values.app.useSelfSignedCert .Values.app.useBringYourOwnCert }}
+      - name: ssl-certs
+        secret:
+          secretName: {{ .Release.Name }}-tls-secret
+      {{- end }}
+
+      {{- if or .Values.app.useSelfSignedCert .Values.app.useBringYourOwnCert }}
+      initContainers:
+      - name: wait-for-tls-secret
+        image: "bitnami/kubectl:latest"
+        imagePullPolicy: Always
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            {{- if .Values.app.useBringYourOwnCert }}
+            echo "Waiting for custom TLS secret {{ .Release.Name }}-tls-secret to be created..."
+            {{- else }}
+            echo "Waiting for self-signed TLS secret {{ .Release.Name }}-tls-secret to be created..."
+            {{- end }}
+            until kubectl get secret {{ .Release.Name }}-tls-secret --namespace={{ .Release.Namespace }} 2>/dev/null; do
+              echo "Secret not found, waiting 5 seconds..."
+              sleep 5
+            done
+            echo "TLS secret found, proceeding with nginx startup..."
+      {{- end }}
+
+      containers:
+      - name: nginx
+        image: "{{ .Values.nginx.image.repository }}:{{ .Values.nginx.image.tag }}"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        - containerPort: 443
+          name: https
+          protocol: TCP
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+          readOnly: true
+        {{- if or .Values.app.useSelfSignedCert .Values.app.useBringYourOwnCert }}
+        - name: ssl-certs
+          mountPath: /etc/nginx/ssl
+          readOnly: true
+        {{- end }}
+        resources:
+          {{- toYaml .Values.nginx.resources | nindent 12 }}

@@ -1,0 +1,71 @@
+#TRK-4F41B1FD
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-agentregistry-ui
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "agentregistryui.labels.app" . }}
+    component: agentregistry-ui
+    name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.agentregistryui.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ include "agentregistryui.labels.app" . }}
+      component: agentregistry-ui
+      name: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app: {{ include "agentregistryui.labels.app" . }}
+        component: agentregistry-ui
+        name: {{ .Release.Name }}
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+      containers:
+        - name: agentregistry-ui
+          image: "{{ .Values.agentregistryui.image.repository }}:{{ .Values.agentregistryui.image.tag }}"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          env:
+            - name: registry_api_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/registry"
+            - name: java_auth_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/auth"
+            - name: py_tgmt_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/tenant/python"
+            - name: java_tgmt_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/api/tenant/java"
+            - name: keycloak_url
+              value: "https://aifabric.{{ .Values.app.baseDomain }}/auth"
+          resources:
+            {{- toYaml .Values.agentregistryui.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            failureThreshold: 3
