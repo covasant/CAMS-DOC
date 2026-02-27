@@ -181,17 +181,17 @@ export TAG="1.0"
 Configure the container images:
 
 ```shell
-export IMAGE_KEYCLOAK="marketplace.gcr.io/covasant/cams/keycloak"
-export IMAGE_POSTGRESQL="marketplace.gcr.io/covasant/cams/postgresql"
-export IMAGE_NGINX="marketplace.gcr.io/covasant/cams/nginx"
-export IMAGE_JAUTH="marketplace.gcr.io/covasant/cams/java-auth"
-export IMAGE_JTMGMT="marketplace.gcr.io/covasant/cams/java-tenant"
-export IMAGE_PYTMGMT="marketplace.gcr.io/covasant/cams/python-tenant"
-export IMAGE_CAMSAPI="marketplace.gcr.io/covasant/cams/cams-api"
-export IMAGE_AGENTREGISTRY="marketplace.gcr.io/covasant/cams/agent-registry-api"
-export IMAGE_AGENTREGISTRYUI="marketplace.gcr.io/covasant/cams/agent-registry-ui"
-export IMAGE_LITELLM="marketplace.gcr.io/covasant/cams/litellm"
-export IMAGE_CONTROLTOWER="marketplace.gcr.io/covasant/cams/control-tower"
+export IMAGE_KEYCLOAK="us-docker.pkg.dev/konaai-public/cams/keycloak-mp:2.0"
+export IMAGE_POSTGRESQL="us-docker.pkg.dev/konaai-public/cams/cams/aifabric-seed-data:2.0"
+export IMAGE_NGINX="us-docker.pkg.dev/konaai-public/cams/cams/nginx:2.0"
+export IMAGE_JAUTH="us-docker.pkg.dev/konaai-public/cams/cams/aifabric-java-auth:2.0"
+export IMAGE_JTMGMT="us-docker.pkg.dev/konaai-public/cams/cams/aifabric-java-tmgmt:2.0"
+export IMAGE_PYTMGMT="us-docker.pkg.dev/konaai-public/cams/cams/aifabric-py-tmgmt:2.0"
+export IMAGE_CAMSAPI="us-docker.pkg.dev/konaai-public/cams/cams/aifabric-api:2.0"
+export IMAGE_AGENTREGISTRY="us-docker.pkg.dev/konaai-public/cams/cams/aifabric-agentregistry-api:2.0"
+export IMAGE_AGENTREGISTRYUI="us-docker.pkg.dev/konaai-public/cams/cams/aifabric-agentregistry-ui:2.0"
+export IMAGE_LITELLM="us-docker.pkg.dev/konaai-public/cams/cams/aifabric-litellm:2.0"
+export IMAGE_CONTROLTOWER="us-docker.pkg.dev/konaai-public/cams/cams/aifabric-controltower-ui:2.0"
 ```
 
 #### Create the namespace in your Kubernetes cluster
