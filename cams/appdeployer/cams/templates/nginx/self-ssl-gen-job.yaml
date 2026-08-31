@@ -16,7 +16,9 @@ spec:
       containers:
       - name: cert-gen
         # This image has both OpenSSL and Kubectl
-        image: "bitnami/kubectl:latest"
+        image: "{{ .Values.nginx.certGenJob.image.repository }}:{{ .Values.nginx.certGenJob.image.tag }}"
+        resources:
+          {{- toYaml .Values.nginx.certGenJob.resources | nindent 10 }}
         env:
           - name: APP_DOMAIN
             value: "{{ .Values.app.baseDomain }}"
@@ -31,7 +33,7 @@ spec:
             SECRET_NAME="{{ .Release.Name }}-tls-secret"
             
             # 2. Check if secret already exists (don't overwrite on upgrades if valid)
-            if kubectl get secret $SECRET_NAME; then
+            if kubectl get secret $SECRET_NAME --namespace=$namespace; then
               echo "Secret $SECRET_NAME already exists. Exiting."
               exit 0
             fi

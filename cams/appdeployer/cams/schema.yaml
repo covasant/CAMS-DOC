@@ -26,6 +26,60 @@ x-google-marketplace:
       - Feature
     recommended: false
 
+  # ----------------------------------------------------------------
+  # Cluster resource constraints, so the Marketplace Console UI can
+  # warn if the selected cluster doesn't have enough allocatable
+  # capacity before deploying. One entry per workload, mirroring each
+  # component's values.yaml/schema.yaml replicas + resources.requests.
+  # ----------------------------------------------------------------
+  clusterConstraints:
+    k8sVersion: ">=1.23.0"
+    resources:
+      - replicas: 1 # keycloak
+        requests:
+          cpu: 1000m
+          memory: 512Mi
+      - replicas: 1 # postgresql
+        requests:
+          cpu: 1000m
+          memory: 1000Mi
+      - replicas: 1 # jauth
+        requests:
+          cpu: 500m
+          memory: 512Mi
+      - replicas: 1 # jtmgmt
+        requests:
+          cpu: 500m
+          memory: 512Mi
+      - replicas: 1 # pytmgmt
+        requests:
+          cpu: 250m
+          memory: 256Mi
+      - replicas: 1 # camsapi (includes cams-api-worker sidecar container)
+        requests:
+          cpu: 500m
+          memory: 512Mi
+      - replicas: 1 # agentregistry (includes agentregistry-consumer sidecar container)
+        requests:
+          cpu: 500m
+          memory: 512Mi
+      - replicas: 1 # agentregistryui
+        requests:
+          cpu: 250m
+          memory: 256Mi
+      - replicas: 1 # nginx
+        requests:
+          cpu: 250m
+          memory: 128Mi
+      - replicas: 1 # litellm
+        requests:
+          cpu: 500m
+          memory: 5Gi
+      - replicas: 1 # controltower
+        requests:
+          cpu: 250m
+          memory: 256Mi
+
   # ----------------------------------
   # Images used by this application
   # ----------------------------------
@@ -167,9 +221,10 @@ properties:
     type: boolean
     description: >
       Enable this option to automatically generate self-signed SSL certificates for HTTPS.
+      This is the default TLS mode for CAMS.
       NOTE: This option is mutually exclusive with 'Use Bring Your Own Certificate'.
       If you enable 'Bring Your Own Certificate', this will be ignored.
-    default: false
+    default: true
 
   app.useBringYourOwnCert:
     title: Use Bring Your Own Certificate
@@ -217,6 +272,20 @@ properties:
     type: string
     description: Public hostname for Keycloak (e.g., auth.example.com)
     default: ""
+
+  keycloak.logLevel:
+    title: Keycloak Log Level
+    type: string
+    description: >
+      KC_LOG_LEVEL / KC_LOG_CONSOLE_LEVEL for the Keycloak container.
+      Use INFO or WARN for production; DEBUG/TRACE can log sensitive
+      SQL/session/token details and should only be used for troubleshooting.
+    default: "INFO"
+    enum:
+      - "DEBUG"
+      - "INFO"
+      - "WARN"
+      - "ERROR"
 
   keycloak.resources.requests.cpu:
     type: string
@@ -455,6 +524,17 @@ properties:
   litellm.resources.limits.memory:
     type: string
     default: "5Gi"
+
+  litellm.license:
+    title: LiteLLM Enterprise License Key
+    type: string
+    description: >
+      LiteLLM Enterprise license key. Leave the placeholder default only for
+      trial/non-enterprise use -- any LiteLLM feature that requires a valid
+      license will not function until this is set to a real key.
+    default: "REPLACE_WITH_VALID_LITELLM_LICENSE_KEY"
+    x-google-marketplace:
+      type: STRING
 
   # ----------------------
   # Control Tower UI
