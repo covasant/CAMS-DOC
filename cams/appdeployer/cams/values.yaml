@@ -1,9 +1,10 @@
 app:
   baseDomain: cams.covasant.io # change this 
   exposeNginxService: false
-  # Set to true when using self-signed certificates
+  # Set to true when using self-signed certificates (this is the chart's
+  # documented default — see README "Option 1: Self-Signed Certificates")
   # Set to false when using CA-signed certificates (GoDaddy, Let's Encrypt, etc.)
-  useSelfSignedCert: false
+  useSelfSignedCert: true
   # Set to true when bringing your own certificate
   useBringYourOwnCert: false
   # TLS certificate in PEM format (for bringing your own certificate)
@@ -18,6 +19,10 @@ keycloak:
   replicas: 1
   port: 80
   hostname: "" # enables customers to set their own dns for keycloak
+  # Log level for KC_LOG_LEVEL / KC_LOG_CONSOLE_LEVEL. Keep this at INFO/WARN
+  # for production installs -- DEBUG/TRACE can emit SQL and session/token
+  # details to the pod's stdout/stderr (and any cluster log aggregation).
+  logLevel: INFO
   resources:
     requests:
       cpu: 1000m
@@ -56,6 +61,7 @@ jtmgmt:
   image:
     repository: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-java-tmgmt
     tag: "2.0"
+  replicas: 1
   resources:
     requests:
       cpu: 500m
@@ -139,12 +145,29 @@ nginx:
     limits:
       memory: "256Mi"
       cpu: 500m
+  certGenJob:
+    # Pinned version tag for the bitnami/kubectl image used by the
+    # self-signed cert generation Job and the bring-your-own-cert Job.
+    image:
+      repository: bitnami/kubectl
+      tag: "1.31"
+    resources:
+      requests:
+        cpu: 50m
+        memory: "64Mi"
+      limits:
+        cpu: 200m
+        memory: "128Mi"
 
 litellm:
   image:
     repository: us-docker.pkg.dev/konaai-public/cams/cams/aifabric-litellm
     tag: "2.0"
   replicas: 1
+  # LiteLLM Enterprise license key. This placeholder is NOT a valid license --
+  # any LiteLLM feature gated on a real license will not work until this is
+  # overridden with a genuine key for the deploying customer.
+  license: "REPLACE_WITH_VALID_LITELLM_LICENSE_KEY"
   resources:
     requests:
       memory: "5Gi"
